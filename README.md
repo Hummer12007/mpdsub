@@ -1,13 +1,15 @@
-Usage: mpdsub [OPTION...]
+## mpdsub
 
 This program connects to a running mpd instance and outputs, in a configurable manner, the currently playing song.
 
 Example usage (outfile will contain the latest song played):
-	mpdsub -kdOr --pidfile ~/.mpd/mpdsub.pid --outfile ~/.mpd/mpdsub.playing
+
+	`mpdsub -kdOr --pidfile ~/.mpd/mpdsub.pid --outfile ~/.mpd/mpdsub.playing`
 
 Options:
+```
 	-?, --help
-		display this help
+		display the help message
 	-h, --host HOST
 		mpd instance hostname (or socket file, defaults to localhost)
 	-p, --port PORT
@@ -32,4 +34,4 @@ Options:
 		pidfile location
 	-l, --logfile LOGFILE
 		logfile location
-
+```
