@@ -213,7 +213,7 @@ static struct option opts[] = {
 	{"format",	required_argument,	NULL,	'f'},
 	{"overwrite",	no_argument,		NULL,	'O'},
 	{"retry",	no_argument,		NULL,	'r'},
-	{"daemonize",	no_argument,		NULL,	'd'}, //?was required
+	{"daemonize",	no_argument,		NULL,	'd'},
 	{"kill",	no_argument,		NULL,	'k'},
 	{"outfile",	required_argument,	NULL,	'o'},
 	{"pidfile",	required_argument,	NULL,	1},
