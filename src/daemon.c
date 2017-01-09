@@ -28,12 +28,14 @@ void kill_instance(char *pidfile, bool fatal) {
 		fclose(f);
 	if (pid <= 0) {
 		log("Invalid pid specified.\n");
-		goto fail;
+		if (fatal) goto fail;
+		else goto pidf_cleanup;
 	}
 	if (kill(pid, SIGTERM)) {
 		printf("%d\n", pid);
 		perror("Could not kill specified process");
-		goto fail;
+		if (fatal) goto fail;
+		else goto pidf_cleanup;
 	}
 	if (!fatal) {
 		while (kill(pid, 0) != -1 && errno != ESRCH)
@@ -46,6 +48,12 @@ void kill_instance(char *pidfile, bool fatal) {
 fail:
 	if (fatal)
 		exit(EXIT_FAILURE);
+	else
+		return;
+pidf_cleanup:
+	fprintf(stderr, "Trying to remove pidfile anyway\n");
+	if (!access(pidfile, W_OK))
+		unlink(pidfile);
 }
 
 void daemonize(char **pidfile, char *logfile) {
