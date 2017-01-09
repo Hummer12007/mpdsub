@@ -9,6 +9,8 @@
 static int get_token(char *format, struct format_token *);
 static char *get_tag(struct mpd_song *, struct mpd_status *status, char *);
 
+struct format_strings strings = {"playing", "stopped", "paused", "unknown"};
+
 int format_song(char **c, struct mpd_song *song, struct mpd_status *status, struct format_token *format) {
 	size_t s = 128, pos = 0, len;
 	int cnt = 0;
@@ -76,13 +78,13 @@ char *get_tag(struct mpd_song *song, struct mpd_status *status, char *tag) {
 	if (!strcasecmp(tag, "state")) {
 		switch (mpd_status_get_state(status)) {
 		case MPD_STATE_PLAY:
-			return strdup("playing");
+			return strdup(strings.play);
 		case MPD_STATE_PAUSE:
-			return strdup("paused");
+			return strdup(strings.pause);
 		case MPD_STATE_STOP:
-			return strdup("stopped");
+			return strdup(strings.stop);
 		case MPD_STATE_UNKNOWN:
-			return strdup("unknown");
+			return strdup(strings.unknown);
 		}
 	} else if (!strcasecmp(tag, "volume")) {
 		i = mpd_status_get_volume(status);

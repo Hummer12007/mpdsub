@@ -11,4 +11,11 @@ struct format_token {
 int format_song(char **, struct mpd_song *, struct mpd_status *status, struct format_token *);
 
 struct format_token *parse_format(char *format);
+
+extern struct format_strings {
+	char *play;
+	char *stop;
+	char *pause;
+	char *unknown;
+} strings;
 #endif //FORMATS_H

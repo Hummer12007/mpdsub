@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +17,7 @@
 #include "connect.h"
 #include "daemon.h"
 #include "formats.h"
+#include "ini.h"
 #include "util.h"
 
 #define DEFAULT_HOST "localhost"
@@ -29,9 +31,10 @@ static char *fallback_formats[] = {"%artist%%title||| - %", "%name%", "%file%", 
 
 void read_formats(void);
 void print_song(struct mpd_song *, struct mpd_status *status);
+void read_config();
 void read_params(int, char **);
 void handle_error(struct mpd_connection *);
-char *expand_path(char *path);
+char *expand_path(const char *path);
 
 int usage(void);
 int help(void);
@@ -59,6 +62,7 @@ int main(int argc, char **argv) {
 	struct mpd_connection *conn;
 	struct mpd_status *status;
 	struct mpd_song *song;
+	read_config();
 	read_params(argc, argv);
 	read_formats();
 	sighandler_setup();
@@ -79,7 +83,7 @@ int main(int argc, char **argv) {
 	case 1:
 		log("Terminating.\n");
 		mpd_connection_free(conn);
-		if (params.pidfile)
+		if (params.pidfile && params.daemon)
 			if (unlink(params.pidfile)) {
 				log("%s\n", params.pidfile);
 				perror("Failed to unlink pidfile");
@@ -215,7 +219,7 @@ static struct option opts[] = {
 	{"retry",	no_argument,		NULL,	'r'},
 	{"daemonize",	no_argument,		NULL,	'd'},
 	{"kill",	no_argument,		NULL,	'k'},
-	{"outfile",	required_argument,	NULL,	'o'},
+	{"outfile",	optional_argument,	NULL,	'o'},
 	{"pidfile",	required_argument,	NULL,	1},
 	{"logfile",	required_argument,	NULL,	'l'},
 	{NULL,		0,			NULL,	0}
@@ -242,6 +246,45 @@ static char *descriptions[] = {
 static_assert(sizeof(opts)/sizeof(opts[0]) == sizeof(descriptions)/sizeof(descriptions[0]),
 		"Option descriptions are not consistent.");
 
+int parse_cb(void *data, const char *section, const char *name, const char *value) {
+	(void) data;(void) section;
+	if (!strcasecmp(name, "outfile"))
+		params.outf = expand_path(value);
+	else if (!strcasecmp(name, "pidfile"))
+		params.pidfile = expand_path(value);
+	else if (!strcasecmp(name, "logfile"))
+		params.logfile = expand_path(value);
+	else if (!strcasecmp(name, "overwrite")
+			&& !strcasecmp(value, "true"))
+		params.overwrite = true;
+	else if (!strcasecmp(name, "retry")
+			&& !strcasecmp(value, "true"))
+		params.retry = true;
+	else if (!strcasecmp(name, "format"))
+		params.format = strdup(value);
+	else if (!strcasecmp(section, "strings")) {
+		if (!strcasecmp(name, "play"))
+			strings.play = strdup(value);
+		else if (!strcasecmp(name, "stop"))
+			strings.stop = strdup(value);
+		else if (!strcasecmp(name, "pause"))
+			strings.pause = strdup(value);
+		else if (!strcasecmp(name, "unknown"))
+			strings.unknown = strdup(value);
+	}
+	return true;
+}
+
+void read_config() {
+	static char *configs[] = {"~/.mpdsub.conf", "~/.config/mpdsub.conf"};
+	size_t i;
+	char *c;
+	for (i = 0; i < sizeof(configs) / sizeof(configs[0]); ++i) {
+		ini_parse(c = expand_path(configs[i]), parse_cb, NULL);
+		free(c);
+	}
+}
+
 void read_params(int argc, char **argv) {
 	int c;
 	char *p;
@@ -262,19 +305,22 @@ void read_params(int argc, char **argv) {
 			params.format = strdup(optarg);
 			break;
 		case 'O':
-			params.overwrite = 1;
+			params.overwrite = true;
 			break;
 		case 'r':
-			params.retry = 1;
+			params.retry = true;
 			break;
 		case 'd':
-			params.daemon = 1;
+			params.daemon = true;
 			break;
 		case 'k':
-			params.kill = 1;
+			params.kill = true;
 			break;
 		case 'o':
-			params.outf = expand_path(optarg);
+			if (!strcmp(optarg, "-"))
+				params.outf = NULL;
+			else
+				params.outf = expand_path(optarg);
 			break;
 		case 'l':
 			params.logfile = expand_path(optarg);
@@ -318,7 +364,7 @@ void read_params(int argc, char **argv) {
 	}
 }
 
-char *expand_path(char *path) {
+char *expand_path(const char *path) {
 	wordexp_t we;
 	char *res;
 	if (wordexp(path, &we, 0) || we.we_wordc == 0)
