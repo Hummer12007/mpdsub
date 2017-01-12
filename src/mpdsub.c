@@ -317,15 +317,18 @@ void read_params(int argc, char **argv) {
 			params.kill = true;
 			break;
 		case 'o':
+			free(params.outf);
 			if (!strcmp(optarg, "-"))
 				params.outf = NULL;
 			else
 				params.outf = expand_path(optarg);
 			break;
 		case 'l':
+			free(params.logfile);
 			params.logfile = expand_path(optarg);
 			break;
 		case 1:
+			free(params.pidfile);
 			params.pidfile = expand_path(optarg);
 			break;
 		default:
