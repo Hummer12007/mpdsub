@@ -1,6 +1,6 @@
 ## mpdsub
 
-This program connects to a running mpd instance and outputs, in a configurable manner, the currently playing song. The program can be configured via a text config.
+This program connects to a running mpd instance and outputs, in a configurable manner, the currently playing song. The program can be configured with a text config.
 
 Example usage (outfile will contain the latest song played):
 
