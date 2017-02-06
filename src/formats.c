@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <stdbool.h>
 
 #include "util.h"
 #include "formats.h"
 
 static int get_token(char *format, struct format_token *);
+static bool tag_counts(char *tag);
 static char *get_tag(struct mpd_song *, struct mpd_status *status, char *);
 
 struct format_strings strings = {"playing", "stopped", "paused", "unknown"};
@@ -31,7 +33,8 @@ int format_song(char **c, struct mpd_song *song, struct mpd_status *status, stru
 				free(buf);
 				goto cont;
 			}
-			cnt++;
+			if (tag_counts(format->contents))
+				cnt++;
 			len = strlen(buf) +
 				(format->prefix ? strlen(format->prefix) : 0) +
 				(format->suffix ? strlen(format->suffix) : 0) +
@@ -68,6 +71,12 @@ static inline char *print_unsigned(unsigned u) {
 	char *c = calloc(1, 11);
 	sprintf(c, "%u", u);
 	return c;
+}
+
+// whether to count tag, when formatting (only song-related tags are counted)
+// TODO: an option to count every tag
+static inline bool tag_counts(char *tag) {
+	return mpd_tag_name_iparse(tag) > -1;
 }
 
 char *get_tag(struct mpd_song *song, struct mpd_status *status, char *tag) {

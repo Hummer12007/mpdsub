@@ -1,5 +1,6 @@
 #ifndef FORMATS_H
 #define FORMATS_H
+#include <stdbool.h>
 #include <mpd/client.h>
 
 struct format_token {
